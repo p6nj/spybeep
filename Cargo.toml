@@ -1,7 +1,7 @@
 [package]
 name = "spybeep"
 description = "Make your keyboard beep 🤖🤖🤖"
-version = "0.1.1"
+version = "0.2.0"
 edition = "2021"
 license = "Unlicense"
 repository = "https://github.com/p6nj/spybeep"
@@ -9,6 +9,7 @@ repository = "https://github.com/p6nj/spybeep"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+clap = { version = "4.5.3", features = ["derive"] }
 freqiterator = "1.0.0"
 mki = "0.2.3"
 rodio = { version = "0.17.3", default-features = false }

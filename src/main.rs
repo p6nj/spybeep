@@ -1,11 +1,13 @@
+use clap::Parser;
+use cli::Args;
 use freqiterator::FreqIterator;
 use mki::Keyboard::*;
 use rodio::{source::SineWave, OutputStream, Source};
 use std::time::Duration;
-
-const FIRST_OCTAVE: u8 = 2;
+mod cli;
 
 fn main() {
+    let args = Args::parse();
     let (_stream, handle) = OutputStream::try_default().expect("can't get any sound device");
     {
         let mut keys = [
@@ -126,15 +128,15 @@ fn main() {
         keys
     }
     .iter()
-    .zip(FreqIterator::<f32>::new().skip((12 * FIRST_OCTAVE).into()))
+    .zip(FreqIterator::<f32>::with_scale(args.scale).skip(args.firstnote.into()))
     .for_each(|(key, freq)| {
         let handle = handle.clone();
         key.bind(move |_| {
             handle
                 .play_raw(
                     SineWave::new(freq)
-                        .take_duration(Duration::from_millis(100))
-                        .amplify(0.5),
+                        .take_duration(Duration::from_millis(args.duration))
+                        .amplify((args.volume / u8::MAX) as f32),
                 )
                 .unwrap()
         })
