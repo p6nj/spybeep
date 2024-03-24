@@ -9,6 +9,6 @@ repository = "https://github.com/p6nj/spybeep"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-freqiterator = "0.1.0"
+freqiterator = "1.0.0"
 mki = "0.2.3"
 rodio = { version = "0.17.3", default-features = false }
