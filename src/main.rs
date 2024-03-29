@@ -131,12 +131,13 @@ fn main() {
     .zip(FreqIterator::<f32>::with_scale(args.scale).skip(args.firstnote.into()))
     .for_each(|(key, freq)| {
         let handle = handle.clone();
-        key.bind(move |_| {
+        key.bind(move |k| {
+            println!("{k}");
             handle
                 .play_raw(
                     SineWave::new(freq)
                         .take_duration(Duration::from_millis(args.duration))
-                        .amplify((args.volume / u8::MAX) as f32),
+                        .amplify(args.volume as f32 / u8::MAX as f32),
                 )
                 .unwrap()
         })
