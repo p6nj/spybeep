@@ -132,7 +132,7 @@ fn main() {
     .for_each(|(key, freq)| {
         let handle = handle.clone();
         key.bind(move |k| {
-            println!("{k}");
+            // println!("{k}");
             handle
                 .play_raw(
                     SineWave::new(freq)
