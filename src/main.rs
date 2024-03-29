@@ -3,7 +3,7 @@ use cli::Args;
 use freqiterator::FreqIterator;
 use mki::Keyboard::*;
 use rodio::{source::SineWave, OutputStream, Source};
-use std::time::Duration;
+use std::{thread::sleep, time::Duration};
 mod cli;
 
 fn main() {
@@ -131,7 +131,7 @@ fn main() {
     .zip(FreqIterator::<f32>::with_scale(args.scale).skip(args.firstnote.into()))
     .for_each(|(key, freq)| {
         let handle = handle.clone();
-        key.bind(move |k| {
+        key.bind(move |_| {
             // println!("{k}");
             handle
                 .play_raw(
@@ -142,5 +142,5 @@ fn main() {
                 .unwrap()
         })
     });
-    loop {}
+    sleep(Duration::from_secs(u64::MAX));
 }
