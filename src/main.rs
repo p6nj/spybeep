@@ -1,7 +1,7 @@
 use clap::Parser;
 use cli::Args;
-use freqiterator::FreqIterator;
-use mki::Keyboard::*;
+use freqiterator::{FreqGenerator, A0};
+use mki::Keyboard::{self, *};
 use rodio::{source::SineWave, OutputStream, Source};
 use std::{thread::sleep, time::Duration};
 mod cli;
@@ -49,8 +49,6 @@ fn main() {
             Number9,
             LeftAlt,
             RightAlt,
-            LeftShift,
-            RightShift,
             LeftControl,
             RightControl,
             BackSpace,
@@ -128,16 +126,23 @@ fn main() {
         keys
     }
     .iter()
-    .zip(FreqIterator::<f32>::with_scale(args.scale).skip(args.firstnote.into()))
+    .zip(FreqGenerator::new(A0, args.scale as f32).skip(args.firstnote.into())) // todo: zip both major and minor scales
     .for_each(|(key, freq)| {
         let handle = handle.clone();
-        key.bind(move |_| {
-            // println!("{k}");
+        key.bind(move |k| {
+            println!("{k}");
             handle
                 .play_raw(
-                    SineWave::new(freq)
-                        .take_duration(Duration::from_millis(args.duration))
-                        .amplify(args.volume as f32 / u8::MAX as f32),
+                    SineWave::new(
+                        if Keyboard::LeftShift.is_pressed() || Keyboard::RightShift.is_pressed() {
+                            0f32
+                        } else {
+                            freq
+                        },
+                    )
+                    .take_duration(Duration::from_millis(args.duration))
+                    .fade_in(Duration::from_millis(10))
+                    .amplify(args.volume as f32 / u8::MAX as f32),
                 )
                 .unwrap()
         })
