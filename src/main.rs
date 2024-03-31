@@ -1,6 +1,6 @@
 use clap::Parser;
 use cli::Args;
-use freqiterator::{FreqGenerator, A0};
+use freqiterator::{FreqGenerator, ScaleGenerator, A0};
 use mki::Keyboard::{self, *};
 use rodio::{source::SineWave, OutputStream, Source};
 use std::{thread::sleep, time::Duration};
@@ -126,8 +126,15 @@ fn main() {
         keys
     }
     .iter()
-    .zip(FreqGenerator::new(A0, args.scale as f32).skip(args.firstnote.into())) // todo: zip both major and minor scales
-    .for_each(|(key, freq)| {
+    .zip(ScaleGenerator::new(
+        FreqGenerator::new(A0, args.scale as f32).skip(args.key.into()),
+        0,
+    ))
+    .zip(ScaleGenerator::new(
+        FreqGenerator::new(A0, args.scale as f32).skip(args.key.into()),
+        5,
+    )) // todo: zip both major and minor scales
+    .for_each(|((key, maj), min)| {
         let handle = handle.clone();
         key.bind(move |k| {
             println!("{k}");
@@ -135,9 +142,9 @@ fn main() {
                 .play_raw(
                     SineWave::new(
                         if Keyboard::LeftShift.is_pressed() || Keyboard::RightShift.is_pressed() {
-                            0f32
+                            maj
                         } else {
-                            freq
+                            min
                         },
                     )
                     .take_duration(Duration::from_millis(args.duration))

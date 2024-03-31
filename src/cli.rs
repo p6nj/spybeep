@@ -12,7 +12,7 @@ pub(super) struct Args {
     /// Number of notes in the scale (tempered)
     #[arg(short, long, default_value_t = 12)]
     pub(super) scale: u8,
-    /// First note (shifted from A-1)
+    /// Key of the scale or first note (shifted from A0)
     #[arg(short, long, default_value_t = 12*3)]
-    pub(super) firstnote: u8,
+    pub(super) key: u8,
 }
