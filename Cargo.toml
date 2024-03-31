@@ -12,5 +12,4 @@ repository = "https://github.com/p6nj/spybeep"
 clap = { version = "4.5", features = ["derive"] }
 freqiterator = "2.0"
 mki = "0.2"
-pc-keyboard = "0.7.0"
 rodio = { version = "0.17", default-features = false }

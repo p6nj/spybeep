@@ -1,158 +1,43 @@
 use clap::Parser;
-use cli::Args;
+use cli::{Args, Mode};
 use freqiterator::{FreqGenerator, ScaleGenerator, A0};
-use mki::Keyboard::{self, *};
+use mki::Keyboard;
 use rodio::{source::SineWave, OutputStream, Source};
-use std::{thread::sleep, time::Duration};
+use std::{str::FromStr, thread::sleep, time::Duration};
 mod cli;
+
+fn mode_redirect(mode: Mode) -> Box<dyn Iterator<Item = f32>> {
+    match mode {
+        Mode::Scale { key, first, mode } => Box::new(
+            ScaleGenerator::new(FreqGenerator::new(A0, 12f32).skip(key.into()), mode.into())
+                .skip(first.into()),
+        ),
+        Mode::TET { notes, first } => {
+            Box::new(FreqGenerator::new(A0, notes.into()).skip(first.into()))
+        }
+    }
+}
 
 fn main() {
     let args = Args::parse();
     let (_stream, handle) = OutputStream::try_default().expect("can't get any sound device");
-    {
-        let mut keys = [
-            A,
-            B,
-            C,
-            D,
-            E,
-            F,
-            G,
-            H,
-            I,
-            J,
-            K,
-            L,
-            M,
-            N,
-            O,
-            P,
-            Q,
-            R,
-            S,
-            T,
-            U,
-            V,
-            W,
-            X,
-            Y,
-            Z,
-            Number0,
-            Number1,
-            Number2,
-            Number3,
-            Number4,
-            Number5,
-            Number6,
-            Number7,
-            Number8,
-            Number9,
-            LeftAlt,
-            RightAlt,
-            LeftControl,
-            RightControl,
-            BackSpace,
-            Tab,
-            Enter,
-            Escape,
-            Space,
-            PageUp,
-            PageDown,
-            Home,
-            Left,
-            Up,
-            Right,
-            Down,
-            Print,
-            PrintScreen,
-            Insert,
-            Delete,
-            LeftWindows,
-            RightWindows,
-            Comma,         // ,<
-            Period,        // .>
-            Slash,         // /?
-            SemiColon,     // ;:
-            Apostrophe,    // '"
-            LeftBrace,     // [{
-            BackwardSlash, // \|
-            RightBrace,    // ]}
-            Grave,         // `~
-            F1,
-            F2,
-            F3,
-            F4,
-            F5,
-            F6,
-            F7,
-            F8,
-            F9,
-            F10,
-            F11,
-            F12,
-            F13,
-            F14,
-            F15,
-            F16,
-            F17,
-            F18,
-            F19,
-            F20,
-            F21,
-            F22,
-            F23,
-            F24,
-            NumLock,
-            ScrollLock,
-            CapsLock,
-            Numpad0,
-            Numpad1,
-            Numpad2,
-            Numpad3,
-            Numpad4,
-            Numpad5,
-            Numpad6,
-            Numpad7,
-            Numpad8,
-            Numpad9,
-            Multiply,
-            Add,
-            Separator,
-            Subtract,
-            Decimal,
-            Divide,
-        ];
-        keys.sort();
-        keys
-    }
-    .iter()
-    .zip(ScaleGenerator::new(
-        FreqGenerator::new(A0, args.scale as f32).skip(args.key.into()),
-        0,
-    ))
-    .zip(ScaleGenerator::new(
-        FreqGenerator::new(A0, args.scale as f32).skip(args.key.into()),
-        5,
-    )) // todo: zip both major and minor scales
-    .for_each(|((key, maj), min)| {
-        let handle = handle.clone();
-        key.bind(move |k| {
-            println!("{k}");
-            handle
-                .play_raw(
-                    SineWave::new(
-                        if Keyboard::LeftShift.is_pressed() || Keyboard::RightShift.is_pressed() {
-                            maj
-                        } else {
-                            min
-                        },
+    args.keys
+        .split(',')
+        .map(|k| Keyboard::from_str(k).expect(format!("Unknown key: '{k}'").as_str()))
+        .zip(mode_redirect(args.notes.unwrap_or_default()))
+        .for_each(|(key, f)| {
+            let handle = handle.clone();
+            key.bind(move |k| {
+                println!("{k}");
+                handle
+                    .play_raw(
+                        SineWave::new(f)
+                            .take_duration(Duration::from_millis(args.duration))
+                            .fade_in(Duration::from_millis(10))
+                            .amplify(args.volume as f32 / u8::MAX as f32),
                     )
-                    .take_duration(Duration::from_millis(args.duration))
-                    .fade_in(Duration::from_millis(10))
-                    .amplify(args.volume as f32 / u8::MAX as f32),
-                )
-                .unwrap()
-        })
-    });
+                    .unwrap()
+            })
+        });
     sleep(Duration::from_secs(u64::MAX));
 }
