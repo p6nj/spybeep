@@ -22,7 +22,7 @@ pub(super) struct Args {
 
 #[derive(Subcommand, Debug)]
 pub(super) enum Mode {
-    TET {
+    Tet {
         /// Number of notes in the scale (tempered)
         #[arg(short, long, default_value_t = 12)]
         notes: u8,
@@ -45,7 +45,7 @@ pub(super) enum Mode {
 
 impl Default for Mode {
     fn default() -> Self {
-        Self::TET {
+        Self::Tet {
             notes: 24,
             first: 24 * 3,
         }

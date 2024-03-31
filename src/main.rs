@@ -12,7 +12,7 @@ fn mode_redirect(mode: Mode) -> Box<dyn Iterator<Item = f32>> {
             ScaleGenerator::new(FreqGenerator::new(A0, 12f32).skip(key.into()), mode.into())
                 .skip(first.into()),
         ),
-        Mode::TET { notes, first } => {
+        Mode::Tet { notes, first } => {
             Box::new(FreqGenerator::new(A0, notes.into()).skip(first.into()))
         }
     }
@@ -23,12 +23,11 @@ fn main() {
     let (_stream, handle) = OutputStream::try_default().expect("can't get any sound device");
     args.keys
         .split(',')
-        .map(|k| Keyboard::from_str(k).expect(format!("Unknown key: '{k}'").as_str()))
+        .map(|k| Keyboard::from_str(k).unwrap_or_else(|_| panic!("Unknown key: '{k}'")))
         .zip(mode_redirect(args.notes.unwrap_or_default()))
         .for_each(|(key, f)| {
             let handle = handle.clone();
-            key.bind(move |k| {
-                println!("{k}");
+            key.bind(move |_| {
                 handle
                     .play_raw(
                         SineWave::new(f)
